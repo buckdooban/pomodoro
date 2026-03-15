@@ -7,6 +7,7 @@ class PomodoroManager:
         self,
         cycle_count=0,
         total_cycle_count=3,
+        lifetime_cycle_count=0,
         timer_duration=5,  # CHANGE BACK TO 25 FOR PRODUCTION
         time_to_focus=True,
         focus_duration=5,  # CHANGE BACK TO 25 FOR PRODUCTION
@@ -18,6 +19,7 @@ class PomodoroManager:
     ):
         self.cycle_count = cycle_count
         self.total_cycle_count = total_cycle_count
+        self.lifetime_cycle_count = lifetime_cycle_count
         self.timer_duration = timer_duration
         self.time_to_focus = time_to_focus
         self.FOCUS_DURATION = focus_duration
@@ -28,6 +30,9 @@ class PomodoroManager:
         self.FOCUS_MESSAGE = focus_message
         self.alert_message = short_break_message
 
+    # is a single source of truth of the state of the application at any point,
+    # this is where all of the functions look if they need to know what timer cycle
+    # the user is on.
     def _get_current_state(self):
         if self.cycle_count == self.total_cycle_count and not self.time_to_focus:
             return "LONG_BREAK"
@@ -36,9 +41,13 @@ class PomodoroManager:
         else:
             return "FOCUS"
 
+    # updates state after every timer sequence
+    # i.e. when a focus session ends, when a short or a long break ends
     def toggle_state(self):
+        # if the timer goes off and it's time to focus, a break just ended
+        # switch time_to_focus to false so the next time a timer ends the
+        # app knows it's time for a break
         if self.time_to_focus:
-            # Focus just ended, always switch to break
             self.time_to_focus = False
         else:
             # Break just ended, decide if we reset or increment
@@ -46,12 +55,16 @@ class PomodoroManager:
                 self.cycle_count = 0
             else:
                 self.cycle_count += 1
+                self.lifetime_cycle_count += 1
             self.time_to_focus = True
 
-        # After the variables are updated, sync the message and timer
+        # after state updates, fire off correct message and
+        # set appropriate timer duration based on the state
         self.set_message()
         self.set_timer_duration()
 
+    # checks the current state of app and
+    # updates timer duration accordingly
     def set_timer_duration(self):
         current_state = self._get_current_state()
         if current_state == "LONG_BREAK":
@@ -66,6 +79,8 @@ class PomodoroManager:
         else:
             print("set_timer_duration foobarbaz")
 
+    # checks the current state of app and
+    # updates notification message accordingly
     def set_message(self):
         current_state = self._get_current_state()
         if current_state == "LONG_BREAK":
@@ -75,19 +90,63 @@ class PomodoroManager:
         else:
             self.alert_message = self.FOCUS_MESSAGE
 
-        # print(f"ALERT MESSAGE: {self.alert_message}")
         return self.alert_message
 
-    async def start_timer(self, stop_event):
+    # starts countdown at app start, reacts to user input
+    async def handle_timer(
+        self, start_event, stop_event, pause_event, skip_event, reset_event
+    ):
         t = self.timer_duration
-        state = self._get_current_state()
-        print(f"\nTIMER START - {state} - TIMER LENGTH: {self.timer_duration}")
-        while t and not stop_event.is_set():
+        print("\nTimer started")
+        while t > 0 and not stop_event.is_set():
             mins, secs = divmod(t, 60)
             timer = "{:02d}:{:02d}".format(mins, secs)
             print(f"{timer.rjust(6)}", end="\r")  # Overwrite the line each second
+            # gives up control flow once a second so that user input can be checked for
             await asyncio.sleep(1)
+
+            # check for user input on every cycle
+            if pause_event.is_set():
+                print("Timer paused.")
+
+                # fixes bug where i couldn't quit while timer was paused
+                # i had to start the timer back up before i could quit
+                # this basically tells the event loop "if the timer is paused,
+                # watch for both a start_event and a stop_event and return whichever flags first"
+                wait_start = asyncio.create_task(start_event.wait())
+                wait_stop = asyncio.create_task(stop_event.wait())
+
+                await asyncio.wait(
+                    [wait_start, wait_stop], return_when=asyncio.FIRST_COMPLETED
+                )
+
+                pause_event.clear()
+                start_event.clear()
+            elif stop_event.is_set():
+                print("\nStopped")
+                break
+            elif start_event.is_set():
+                print("\nRestarting timer")
+            elif reset_event.is_set():
+                print(
+                    "\nreset_event flag is set, reseting timer sequence and app state back to default values"
+                )
+                self.cycle_count = 0
+                self.lifetime_cycle_count = 0
+                self.time_to_focus = True
+                self.set_timer_duration()
+                self.set_message()
+                t = self.timer_duration
+                reset_event.clear()
+            elif skip_event.is_set():
+                print("\nskipped to next cycle sequence early.")
+                skip_event.clear()
+                break
             t -= 1
+
+        # fixes bug where the timer wouldn't go all the way down to 00:00
+        if t == 0 and not skip_event.is_set() and not stop_event.is_set():
+            print(" 00:00", end="\r\n")
 
 
 ###
