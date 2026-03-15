@@ -1,4 +1,4 @@
-import time
+import asyncio
 
 
 class PomodoroManager:
@@ -37,33 +37,20 @@ class PomodoroManager:
             return "FOCUS"
 
     def toggle_state(self):
-        if (
-            self.cycle_count == self.total_cycle_count
-            and self._get_current_state() == "LONG_BREAK"
-        ):
-            # print("IN toggle_state IF BLOCK")
-            self.cycle_count = 0
-            self.time_to_focus = True
-            print(f"CYCLE COUNT: {self.cycle_count}")
-            self.set_message()
-            self.set_timer_duration()
-        elif self.time_to_focus and self.timer_duration == self.FOCUS_DURATION:
-            # print("IN toggle_state ELIF BLOCK")
+        if self.time_to_focus:
+            # Focus just ended, always switch to break
             self.time_to_focus = False
-            self.set_message()
-            self.set_timer_duration()
-            print(f"CYCLE COUNT: {self.cycle_count}")
-        elif (
-            not self.time_to_focus and self.timer_duration == self.SHORT_BREAK_DURATION
-        ):
-            # print("IN toggle_state 2nd ELIF BLOCK")
-            self.time_to_focus = True
-            self.cycle_count += 1
-            print(f"CYCLE COUNT: {self.cycle_count}")
-            self.set_message()
-            self.set_timer_duration()
         else:
-            print("toggle_state foobarbaz")
+            # Break just ended, decide if we reset or increment
+            if self.cycle_count == self.total_cycle_count:
+                self.cycle_count = 0
+            else:
+                self.cycle_count += 1
+            self.time_to_focus = True
+
+        # After the variables are updated, sync the message and timer
+        self.set_message()
+        self.set_timer_duration()
 
     def set_timer_duration(self):
         current_state = self._get_current_state()
@@ -82,26 +69,24 @@ class PomodoroManager:
     def set_message(self):
         current_state = self._get_current_state()
         if current_state == "LONG_BREAK":
-            print(f"ALERT MESSAGE: {self.LONG_BREAK_MESSAGE}")
-            return self.LONG_BREAK_MESSAGE
+            self.alert_message = self.LONG_BREAK_MESSAGE
         elif current_state == "SHORT_BREAK":
-            print(f"ALERT MESSAGE: {self.SHORT_BREAK_MESSAGE}")
-            return self.SHORT_BREAK_MESSAGE
+            self.alert_message = self.SHORT_BREAK_MESSAGE
         else:
-            print(f"ALERT MESSAGE: {self.FOCUS_MESSAGE}")
-            return self.FOCUS_MESSAGE
+            self.alert_message = self.FOCUS_MESSAGE
 
-    # async def start_timer(self):
-    def start_timer(self):
+        # print(f"ALERT MESSAGE: {self.alert_message}")
+        return self.alert_message
+
+    async def start_timer(self, stop_event):
         t = self.timer_duration
         state = self._get_current_state()
         print(f"\nTIMER START - {state} - TIMER LENGTH: {self.timer_duration}")
-        while t:
+        while t and not stop_event.is_set():
             mins, secs = divmod(t, 60)
             timer = "{:02d}:{:02d}".format(mins, secs)
             print(f"{timer.rjust(6)}", end="\r")  # Overwrite the line each second
-            # await asyncio.sleep(1)
-            time.sleep(1)
+            await asyncio.sleep(1)
             t -= 1
 
 
