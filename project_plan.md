@@ -25,7 +25,6 @@ A user is able to go through three Cycles consisting of one focused Pomodoro Blo
     * `pomo stop`
     * `pomo skip`
     * `pomo restart`
-- Real time countdown in the toolbar on user's computer near where clock and date are
 - User notified of Cycle completion with system notification in the top-left corner of screen
     * Notification dismissed once clicked, next cycle starts after notification
       dismissed.
@@ -33,12 +32,13 @@ A user is able to go through three Cycles consisting of one focused Pomodoro Blo
     device
     * notification banner reads "time for a break" when pomodoro block finishes
     * notification banner reads "time to focus" when break block finishes
+
+### Back burner
 - Indicator in status bar which part of a cycle user is in
     * Pomodoro (Red background, white text)
     * Short break (Blue background, black text)
     * Long break (Purple background, black text)
-
-### Back burner
+- Real time countdown in the toolbar on user's computer near where clock and date are
 - Settings menu
     * Adjust length of breaks and pomodoro blocks
     * Change sound notifying user a cycle has completed

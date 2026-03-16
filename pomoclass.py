@@ -3,6 +3,8 @@ import asyncio
 
 class PomodoroManager:
 
+    # initialize all of the default state, the times integers represent minutes
+    # this will eventaully all be controlled from a config file but that's a later thing
     def __init__(
         self,
         cycle_count=0,
@@ -30,9 +32,8 @@ class PomodoroManager:
         self.FOCUS_MESSAGE = focus_message
         self.alert_message = short_break_message
 
-    # is a single source of truth of the state of the application at any point,
-    # this is where all of the functions look if they need to know what timer cycle
-    # the user is on.
+    # single source of truth of the state of the application at any point,
+    # this is where all of the functions look if they need to know what timer cycle the user is on.
     def _get_current_state(self):
         if self.cycle_count == self.total_cycle_count and not self.time_to_focus:
             return "LONG_BREAK"
@@ -101,18 +102,20 @@ class PomodoroManager:
         while t > 0 and not stop_event.is_set():
             mins, secs = divmod(t, 60)
             timer = "{:02d}:{:02d}".format(mins, secs)
-            print(f"{timer.rjust(6)}", end="\r")  # Overwrite the line each second
+            print(
+                f"{timer.rjust(6)}", end="\r"
+            )  # Overwrite the line each second (the majority of the countdown code was stoken from a geeksforgeeks article linked below)
             # gives up control flow once a second so that user input can be checked for
             await asyncio.sleep(1)
 
-            # check for user input on every cycle
+            # check for asyncio.Flags raised
             if pause_event.is_set():
                 print("Timer paused.")
 
-                # fixes bug where i couldn't quit while timer was paused
+                # fixes a bug where i couldn't quit while timer was paused
                 # i had to start the timer back up before i could quit
                 # this basically tells the event loop "if the timer is paused,
-                # watch for both a start_event and a stop_event and return whichever flags first"
+                # watch for both a start_event and a stop_event and go with whichever finished first"
                 wait_start = asyncio.create_task(start_event.wait())
                 wait_stop = asyncio.create_task(stop_event.wait())
 
@@ -123,7 +126,7 @@ class PomodoroManager:
                 pause_event.clear()
                 start_event.clear()
             elif stop_event.is_set():
-                print("\nStopped")
+                print("\nShutting down...")
                 break
             elif start_event.is_set():
                 print("\nRestarting timer")
@@ -143,6 +146,9 @@ class PomodoroManager:
                 skip_event.clear()
                 break
             t -= 1
+            ###
+            # https://www.geeksforgeeks.org/python/how-to-create-a-countdown-timer-using-python/
+            ###
 
         # fixes bug where the timer wouldn't go all the way down to 00:00
         if t == 0 and not skip_event.is_set() and not stop_event.is_set():
