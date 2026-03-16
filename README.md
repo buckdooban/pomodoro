@@ -12,11 +12,14 @@ The system-level notifcations are handled by [desktop-notifier](https://desktop-
 Python 3.9+ and the `desktop-notifier` package.
 
 1. Download the zip file, extract in a folder named "stolen_nft_screenshots" 
-2. (Optional but recommended) Create and activate a virtual environment:
-   `python3 -m venv .venv`
-   `source .venv/bin/activate`
-3. Install the required dependencies:
-   `pip install desktop-notifier`
+2. Open your terminal and navigate inside the extracted project folder.
+3. Create the virtual environment (not required, but a good idea):
+   - `python3 -m .venv venv`
+4. Activate the environment: 
+   - Linux/macOS: `source .venv/bin/activate`
+   - Windows: `.venv\Scripts\activate`
+5. Install dependencies:
+   `pip install -r requirements.txt`
 
 ## Usage
 Boot it up with:
