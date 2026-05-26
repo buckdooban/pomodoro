@@ -10,11 +10,11 @@ class PomodoroManager:
         cycle_count=0,
         total_cycle_count=3,
         lifetime_cycle_count=0,
-        timer_duration=5,  # CHANGE BACK TO 25 FOR PRODUCTION
+        timer_duration=1500,  # 25 minutes
         time_to_focus=True,
-        focus_duration=5,  # CHANGE BACK TO 25 FOR PRODUCTION
-        short_break_duration=1,  # CHANGE BACK TO 5 FOR PRODUCTION
-        long_break_duration=3,  # CHANGE BACK TO 15 FOR PRODUCTION
+        focus_duration=25,
+        short_break_duration=300,  # 5 minutes
+        long_break_duration=900,  # 15 minutes
         short_break_message="Time for a short break!",
         long_break_message="Time for a long break!",
         focus_message="Time to focus!",

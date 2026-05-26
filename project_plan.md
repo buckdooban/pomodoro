@@ -1,55 +1,64 @@
 # CLI Pomodoro Timer Project Plan
 
-## Project overview
+## Overview
 
 ### Goal
-Build a customizable Pomodoro Timer cli for focused sessions of studying 
+Move Pomodoro Timer cli from last term over to cross-platform TUI and expand featureset
 
 ### Terms:
-- Pomodoro block: focused study time
-- Break block: break time
-- Pomodoro block + Break block = One cycle
-    * Every Pomodoro block ends in a **short break** (default 5 minutes)
-    * Every fourth Pomodoro block has a **long break** (default 15 minutes)
-- Each cycle increments the Pomodoro Cycle Count
-- Restarting the program resets Pomodoro cycle count back to one
-
-### Success Metric
-A user is able to go through three Cycles consisting of one focused Pomodoro Block and an unfocused Break Block. The fourth cycle automatically extends the break which goes back to the normal length at the fifth.
+- Block: a user-determined "chunk" of time
+- Pomodoro Block: focused study time
+- Break Block: unfocused, mind wandering time
+- User notified at the end of every block
+- Pomodoro block + Break block = Cycle
+    * Every Pomodoro block ends in a **Short** Break Block (default 5 minutes)
+    * Every fourth Pomodoro block ends in a **Long** Break Block (default 15 minutes)
+- Each Cycle increments the Cycle Count, cycle count increments as long as program runs or until you deliberately restart it. 
 
 ## Feature List
 
 ### Critical path
-- Ability to stop, start, skip, or restart timer cycles
-    * `pomo start`
-    * `pomo stop`
-    * `pomo skip`
-    * `pomo restart`
-- User notified of Cycle completion with system notification in the top-left corner of screen
-    * Notification dismissed once clicked, next cycle starts after notification
-      dismissed.
-    * Notification sound should come through user's speaker or connected
-    device
-    * notification banner reads "time for a break" when pomodoro block finishes
-    * notification banner reads "time to focus" when break block finishes
+- Squash known bugs from v1.0
+    * Timer hangs after first Break Block
+    * Unit mismatch
+- Update pomodoro class to include @decorators
+- Move Current program over to the TUI "Textual"
+- Wire up current functionality in Textual 
+- UX improvements
+    * Background reflects what part of Cycle user is in
+        + Pomodoro (Red background, white text)
+        + Short break (Blue background, black text)
+        + Long break (Purple background, black text)
+    * Keyboard shortcuts for core features
+        + `start`
+        + `stop`
+        + `restart`
+        + `skip`
+    * Clickable buttons for users that prefer to use a mouse
+- Get OS-level notifications to work cross platform
+    * Try `desktop-notifier` first, fallback to TUI 
+    * I honestly don't have super high hopes for this one, it'll probably all
+    have to be handled within Textual. 
+- Installable via `pipx`
+    * With real working install script
+    * see what this `pyproject.toml` file is all about
+- Update README.md with all improvements as they happen
 
 ### Back burner
+- Settings menu
+    * Adjust length of Break Blocks and Pomodoro Blocks
+    * Change sound notifying user a cycle has completed
+- Customization Menu
+    * Change sounds by pointing to a file on user's computer.
+    * Autostart Next Cycle when Previous Cycle ends
 - Indicator in status bar which part of a cycle user is in
     * Pomodoro (Red background, white text)
     * Short break (Blue background, black text)
     * Long break (Purple background, black text)
 - Real time countdown in the toolbar on user's computer near where clock and date are
-- Settings menu
-    * Adjust length of breaks and pomodoro blocks
-    * Change sound notifying user a cycle has completed
-    * System notification automatically goes away when timer goes off at the end of a cycle
-- Customization Menu
-    * Change sounds by pointing to a file on user's computer.
-    * Autostart breaks
-    * Autostart pomodoros
 - Integrate with Twilio so user can get a text when it's time to focus
 - Port to Lua so it can be a neovim plugin
-- Make into a package people can install on their own machines from github
-    * Linux
-    * Mac
-    * Windows
+- Installable via package manager
+    * Linux (apt, pacman)
+    * Mac (homebrew)
+    * Windows (winget)
