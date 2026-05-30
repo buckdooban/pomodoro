@@ -1,5 +1,10 @@
 import asyncio
 
+# BUG:  total_cycle_count should always increment after a break has ended, currently only incrementing after short breaks
+# TODO: refactor currrent classes to use decorators
+# TODO: walk through Textual tutorial in a different repo
+# TODO: get familiar with TOML and what is controlled with the pyproject.toml file
+
 
 class PomodoroManager:
 
@@ -10,11 +15,15 @@ class PomodoroManager:
         cycle_count=0,
         total_cycle_count=3,
         lifetime_cycle_count=0,
-        timer_duration=1500,  # 25 minutes
+        # timer_duration=1500,  # 25 minutes - how long the timer is at any given moment
+        timer_duration=3,  # 5 seconds
         time_to_focus=True,
-        focus_duration=25,
-        short_break_duration=300,  # 5 minutes
-        long_break_duration=900,  # 15 minutes
+        # focus_duration=1500,  # 25 minutes - how long a "focus cycle" is
+        focus_duration=3,  # 5 seconds
+        # short_break_duration=300,  # 5 minutes
+        # long_break_duration=900,  # 15 minutes
+        short_break_duration=1,  # 3 seconds
+        long_break_duration=5,  # 5 seconds
         short_break_message="Time for a short break!",
         long_break_message="Time for a long break!",
         focus_message="Time to focus!",
@@ -91,6 +100,7 @@ class PomodoroManager:
         else:
             self.alert_message = self.FOCUS_MESSAGE
 
+        print(f"total cycle count: {self.lifetime_cycle_count}")
         return self.alert_message
 
     # starts countdown at app start, reacts to user input
