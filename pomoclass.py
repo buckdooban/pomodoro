@@ -1,4 +1,5 @@
 import asyncio
+from textual.app import App, ComposeResult
 
 # BUG:  total_cycle_count should always increment after a break has ended, currently only incrementing after short breaks
 # TODO: refactor currrent classes to use decorators
