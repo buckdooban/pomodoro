@@ -1,12 +1,12 @@
-import asyncio
 import pomoclass
-import signal
-import sys
-import os
-from desktop_notifier import DesktopNotifier, Button
+
+# from desktop_notifier import DesktopNotifier, Button
+from time import monotonic
 
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer
+from textual.containers import HorizontalGroup, VerticalScroll
+from textual.reactive import reactive
+from textual.widgets import Button, Digits, Footer, Header
 
 pomo = pomoclass.PomodoroManager()
 
@@ -30,17 +30,85 @@ pomo = pomoclass.PomodoroManager()
 # INFO: The app can be suspended with `ctrl + z` like normal but you can also bind a "suspend" event to a key and have Textual run system code like starting the default terminal app to give the user their terminal back once they've started the timer
 
 
+class TimeDisplay(Digits):
+    """Widget displaying timer face"""
+
+    start_time = reactive(monotonic)
+    time = reactive(0.0)
+    total = reactive(0.0)
+
+    def on_mount(self) -> None:
+        """event handler called when a widget is added to the app"""
+        self.update_timer = self.set_interval(1 / 60, self.update_time, pause=True)
+
+    def update_time(self) -> None:
+        """Method updates time to current time"""
+        self.time = self.total + (monotonic() - self.start_time)
+
+    def watch_time(self, time: float) -> None:
+        """Called when the time attribute changes."""
+        minutes, seconds = divmod(time, 60)
+        hours, minutes = divmod(minutes, 60)
+        self.update(f"{hours:02,.0f}:{minutes:02.0f}:{seconds:05.2f}")
+
+    def start(self) -> None:
+        """Function to start the timer"""
+        self.start_time = monotonic()
+        self.update_timer.resume()
+
+    def stop(self) -> None:
+        """Function to stop the timer"""
+        self.update_timer.pause()
+        self.total += monotonic() - self.start_time
+        self.time = self.total
+
+    def reset(self) -> None:
+        """Method to reset the time display to zero."""
+        self.total = 0
+        self.time = 0
+
+
+class Stopwatch(HorizontalGroup):
+    """Main Timer Widget"""
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Event handler called when a button is pressed."""
+        button_id = event.button.id
+        time_display = self.query_one(
+            TimeDisplay
+        )  # query_one is like getElementById/Classname
+        if button_id == "start":
+            time_display.start()
+            self.add_class("started")
+        elif button_id == "stop":
+            time_display.stop()
+            self.remove_class("started")
+        elif button_id == "reset":
+            time_display.reset()
+
+    def compose(self) -> ComposeResult:
+        yield Button("Start", id="start", variant="success")
+        yield Button("Stop", id="stop", variant="error")
+        yield Button("Reset", id="reset")
+        yield TimeDisplay("00:00.00")
+
+
 # Turns main() into an async function which just allows for asyncronous code
 # that couldn't be run otherwise to be run inside of it
-class Pomodoro(App):
+class StopwatchApp(App):
     """A pomodoro timer cli for more productivity than you would have otherwise"""
 
-    BINDINGS = [("d", "toggle_dark", "Toggle dark mode")]
+    CSS_PATH = "./styles.tcss"
+    BINDINGS = [
+        ("d", "toggle_dark", "Toggle dark mode"),
+        ("s", "TimeDisplay.start", "Start timer"),
+    ]
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app"""
         yield Header()
         yield Footer()
+        yield VerticalScroll(Stopwatch())
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode"""
@@ -141,5 +209,5 @@ class Pomodoro(App):
 
 
 if __name__ == "__main__":
-    app = Pomodoro()
+    app = StopwatchApp()
     app.run()
