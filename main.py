@@ -1,71 +1,77 @@
 import pomoclass
 
 # from desktop_notifier import DesktopNotifier, Button
-from time import monotonic
 
 from textual.app import App, ComposeResult
 from textual.containers import HorizontalGroup, VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Button, Digits, Footer, Header
+from textual.widgets import Button, Digits, Footer, Header, Static
 
 pomo = pomoclass.PomodoroManager()
 
-# TODO: convert main() function into child of textual App and get it to display something
-# TODO: get default time to show up on clock widget
+# BUG:  cycle_count should always increment after a break has ended, currently only incrementing after short breaks
+# TODO: implement logic or skipping breaks/ focus sessions
 # TODO: create key bindings for:
-# start_event = asyncio.Event()
-# stop_event = asyncio.Event()
-# pause_event = asyncio.Event()
-# skip_event = asyncio.Event()
-# reset_event = asyncio.Event()
-# user_ready_event = asyncio.Event()
-# TODO: rip out DesktopNotifier and replace with textual.app.notify() - https://textual.textualize.io/api/app/#textual.app.App.notify
-# TODO:
-# TODO:
-# TODO:
-# TODO:
-# TODO:
-# TODO:
-
+# start, stop, reset, skip
+# TODO: create display fields that show if user is in focus, short break, or long break
+# TODO: refactor the rest of the classes in PomodoroManager to use decorators
+# TODO: rename classes in main.py to reflect naming associated with a timer and not a stopwatch
+# TODO: Style app to look a little nicer
+# TODO: get familiar with TOML and what is controlled with the pyproject.toml file
+# TODO: see if there is a replacement for if you can get DesktopNotifier to work for system-level notifications
+# TODO: See if you can make sound happen at the end of sessions
+# TODO: Update README.md
 # INFO: The app can be suspended with `ctrl + z` like normal but you can also bind a "suspend" event to a key and have Textual run system code like starting the default terminal app to give the user their terminal back once they've started the timer
 
 
 class TimeDisplay(Digits):
     """Widget displaying timer face"""
 
-    start_time = reactive(monotonic)
-    time = reactive(0.0)
-    total = reactive(0.0)
+    timer_duration = pomo.timer_duration
+    focus_duration = pomo.FOCUS_DURATION
+
+    start_time = timer_duration
+    time = reactive(timer_duration)
+    total = reactive(timer_duration)
 
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
-        self.update_timer = self.set_interval(1 / 60, self.update_time, pause=True)
+        self.update_timer = self.set_interval(1, self.update_time, pause=True)
 
     def update_time(self) -> None:
         """Method updates time to current time"""
-        self.time = self.total + (monotonic() - self.start_time)
+        self.time -= 1
+        # print(f"update_time() self.time: {self.time}")
 
-    def watch_time(self, time: float) -> None:
+    # methods prefixed watch_ followed by name of reactive attribute
+    # run every time the reactive attribute changes
+    def watch_time(self, time: int) -> None:
         """Called when the time attribute changes."""
-        minutes, seconds = divmod(time, 60)
-        hours, minutes = divmod(minutes, 60)
-        self.update(f"{hours:02,.0f}:{minutes:02.0f}:{seconds:05.2f}")
+        mins, secs = divmod(time, 60)
+        if time == 0:
+            print("TOGGLE_STATE")
+            self.app.query_one(Cycles).update_cycle()
+            self.update(f"{mins:02.0f}:{secs:05.2f}")
+            pomo.toggle_state()
+            self.app.notify(pomo.alert_message)
+            self.time = pomo.timer_duration
+            self.stop()
+            self.app.query_one(Stopwatch).remove_class("started")
+        else:
+            self.update(f"{mins:02.0f}:{secs:05.2f}")
 
     def start(self) -> None:
         """Function to start the timer"""
-        self.start_time = monotonic()
         self.update_timer.resume()
 
     def stop(self) -> None:
         """Function to stop the timer"""
         self.update_timer.pause()
-        self.total += monotonic() - self.start_time
-        self.time = self.total
 
     def reset(self) -> None:
         """Method to reset the time display to zero."""
-        self.total = 0
-        self.time = 0
+        self.total = self.focus_duration
+        self.time = self.focus_duration
 
 
 class Stopwatch(HorizontalGroup):
@@ -78,6 +84,7 @@ class Stopwatch(HorizontalGroup):
             TimeDisplay
         )  # query_one is like getElementById/Classname
         if button_id == "start":
+            print("TIME_DISPLAY.START() PRESSED")
             time_display.start()
             self.add_class("started")
         elif button_id == "stop":
@@ -90,7 +97,30 @@ class Stopwatch(HorizontalGroup):
         yield Button("Start", id="start", variant="success")
         yield Button("Stop", id="stop", variant="error")
         yield Button("Reset", id="reset")
-        yield TimeDisplay("00:00.00")
+        yield TimeDisplay("00:00")
+
+
+class Cycles(Static):
+    DEFAULT_CSS = """
+    Cycles {
+        width: 25;
+        height: 5;
+        padding: 1 2;
+        background: $panel;
+        border: $secondary tall;
+        content-align: center middle;
+    }
+    """
+    current_cycle_count = pomo.cycle_count + 1
+
+    def on_mount(self) -> None:
+        """event handler called when a widget is added to the app"""
+        # self.update(f"#{self.current_cycle_count}")
+        self.update(f"#{pomo.cycle_count}")
+
+    def update_cycle(self) -> None:
+        # self.update(f"#{self.current_cycle_count}")
+        self.update(f"#{pomo.cycle_count}")
 
 
 # Turns main() into an async function which just allows for asyncronous code
@@ -101,111 +131,19 @@ class StopwatchApp(App):
     CSS_PATH = "./styles.tcss"
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
-        ("s", "TimeDisplay.start", "Start timer"),
     ]
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app"""
         yield Header()
         yield Footer()
-        yield VerticalScroll(Stopwatch())
+        yield VerticalScroll(Stopwatch(), Cycles())
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode"""
         self.theme = (
             "textual-dark" if self.theme == "textual-light" else "textual-light"
         )
-
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-    # ===
-
-    # sometimes, the Python garbage collector will clean up any background asyncio.Task() objects that aren't explicitly held in memory
-    # so the asyncio docs recommend putting any process that isn't a function or saved to a variable in a set()
-    # I do this with get_user_input() (which reads cli commands, not notification events)
-    # since it could theoretically run in the background for hours
-    # background_tasks = set()
-
-    # get_running_loop() is a method that lets you hook into the event loop that runs
-    # whenever you're in an async function
-    # loop = asyncio.get_running_loop()
-
-    # triggers shut_it_down() when the user types ctrl+c or kill into their terminal
-    # loop.add_signal_handler(signal.SIGINT, shut_it_down)
-    # loop.add_signal_handler(signal.SIGTERM, shut_it_down)
-
-    # INFO: verify that this is handled by Textual
-    # creates a way to listen for user input while timer is running
-    # async def get_user_input():
-    #     while not stop_event.is_set():
-    #
-    #         # creates a seperate thread that runs in the background and listens for user input while the timer is running
-    #         user_input = await asyncio.to_thread(sys.stdin.readline)
-    #         command = user_input.strip().lower()
-    #
-    #         if command == "start":
-    #             start_event.set()
-    #         elif command in ["stop", "exit", "quit", ":q"]:
-    #             stop_event.set()
-    #         elif command == "skip":
-    #             skip_event.set()
-    #         elif command == "pause":
-    #             pause_event.set()
-    #         elif command == "reset":
-    #             reset_event.set()
-
-    # this is the other piece of that garbage collection failsafe that I mentioned above
-    # this is where get_user_input() is added as a background task so Python doesn't garbage collect it
-    # task = asyncio.create_task(get_user_input())
-    # background_tasks.add(task)
-    # task.add_done_callback(background_tasks.discard)
-
-    # gets an instance of the DesktopNotifier object so I can send the notification to the window
-    # and response to user click events
-    # notifier = DesktopNotifier(app_name="Pomodoro Timer CLI")
-
-    # run the timer and send notifications to the user until a stop event is triggered
-    # while not stop_event.is_set():
-    #
-    #     # calls the function that controls the timer and sends user input events to it so it can respond in kind
-    #     await pomo.handle_timer(
-    #         start_event, stop_event, pause_event, skip_event, reset_event
-    #     )
-    #
-    #     if stop_event.is_set():
-    #         break
-    #
-    #     pomo.toggle_state()
-    #
-    #     # this is the notification and the buttons
-    #     await notifier.send(
-    #         title="Pomodoro Timer",
-    #         message=f"{pomo.alert_message}",
-    #         buttons=[Button(title="Dismiss", on_pressed=user_ready_event.set)],
-    #         # on_dispatched=lambda: print("Notification showing"),
-    #         on_clicked=user_ready_event.set,
-    #         on_dismissed=user_ready_event.set,
-    #     )
-    #
-    #     # pauses the timer loop until the user is ready for it to continue
-    #     # aka: the notification button is pressed
-    #     await user_ready_event.wait()
-    #     user_ready_event.clear()
 
 
 if __name__ == "__main__":
