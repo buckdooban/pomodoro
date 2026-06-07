@@ -32,7 +32,7 @@ class PomodoroManager:
         self.SHORT_BREAK_MESSAGE = short_break_message
         self.LONG_BREAK_MESSAGE = long_break_message
         self.FOCUS_SESSION_MESSAGE = focus_session_message
-        self._alert_message = short_break_message
+        self.alert_message = short_break_message
         self._current_session = current_session
 
     # single source of truth of the state of the application at any point,
@@ -70,6 +70,21 @@ class PomodoroManager:
         # set appropriate timer duration based on the state
         self.set_message()
         self.set_timer_duration()
+
+    def reset_state(self):
+        self.current_cycle_count = 1
+        self.total_cycle_count = 4
+        self.lifetime_cycle_count = 1
+        self.time_to_focus = True
+        self.timer_duration = 5
+        self.focus_session_duration = 5
+        self.short_break_duration = 3
+        self.long_break_duration = 8
+        self.short_break_message = "Time for a short break!"
+        self.long_break_message = "Time for a long break!"
+        self.focus_session_message = "Time to focus!"
+        self.current_session = "Focus"
+        self.set_message()
 
     @property
     def timer_duration(self):
@@ -109,15 +124,6 @@ class PomodoroManager:
             self.alert_message = self.FOCUS_SESSION_MESSAGE
 
         return self.alert_message
-
-    # @property
-    # def current_session(self):
-    #     return self._current_session
-    #
-    # # is this even necessary?
-    # @current_session.setter
-    # def current_session(self):
-    #     return self._current_session
 
     def get_current_session(self):
         current_state = self._get_current_state()

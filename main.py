@@ -20,6 +20,9 @@ pomo = pomoclass.PomodoroManager()
 # TODO: See if you can make sound happen at the end of sessions
 # TODO: Update README.md
 # INFO: The app can be suspended with `ctrl + z` like normal but you can also bind a "suspend" event to a key and have Textual run system code like starting the default terminal app to give the user their terminal back once they've started the timer
+# TODO: REFACTOR - move pomo off the global scope and onto the app itself (self.app.pomo)
+# so that reset() can just do self.app.pomo = PomodoroManager() instead of manually
+# resetting every attribute. Required before config file / settings menu can be implemented.
 
 
 class TimeDisplay(Digits):
@@ -47,20 +50,23 @@ class TimeDisplay(Digits):
         mins, secs = divmod(time, 60)
         if time == 0:
             self.update_session()
-            self.update(f"{mins:02.0f}:{secs:05.2f}")
         else:
             self.update(f"{mins:02.0f}:{secs:05.2f}")
 
-    def update_session(self):
-        pomo.toggle_state()
+    def sync_ui(self):
+        print(pomo.timer_duration)
         # update cycle count in UI
         self.app.query_one(Cycles).update_cycle()
         # update current session in UI
         self.app.query_one(Current_Session).update_current_session()
-        self.app.notify(pomo.alert_message)
         self.time = pomo.timer_duration
-        self.stop()
         self.app.query_one(Stopwatch).remove_class("started")
+        self.stop()
+        self.app.notify(pomo.alert_message)
+
+    def update_session(self):
+        pomo.toggle_state()
+        self.sync_ui()
 
     def start(self) -> None:
         """Function to start the timer"""
@@ -72,6 +78,8 @@ class TimeDisplay(Digits):
 
     def reset(self) -> None:
         """Method to reset the time display to zero."""
+        pomo.reset_state()
+        self.sync_ui()
 
     def skip(self) -> None:
         """Method to move to the next session within cycle"""
@@ -101,6 +109,7 @@ class Stopwatch(HorizontalGroup):
         yield Button("Start", id="start", variant="success")
         yield Button("Stop", id="stop", variant="error")
         yield Button("Reset", id="reset")
+        yield Button("Skip", id="skip")
         yield TimeDisplay("00:00")
 
 
