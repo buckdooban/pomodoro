@@ -9,9 +9,6 @@ from textual.widgets import Button, Digits, Footer, Header, Static
 
 pomo = pomoclass.PomodoroManager()
 
-# BUG:  cycle_count should always increment after next focus session has started,
-# currently incrementing once short break has ended
-# TODO: create display fields that show if user is in focus, short break, or long break
 # TODO: implement logic or skipping breaks/ focus sessions
 # TODO: create key bindings for:
 # start, stop, reset, skip
@@ -49,18 +46,21 @@ class TimeDisplay(Digits):
         """Called when the time attribute changes."""
         mins, secs = divmod(time, 60)
         if time == 0:
-            # update cycle count in UI
-            self.app.query_one(Cycles).update_cycle()
-            # update current session in UI
-            self.app.query_one(Current_Session).update_current_session()
+            self.update_session()
             self.update(f"{mins:02.0f}:{secs:05.2f}")
-            pomo.toggle_state()
-            self.app.notify(pomo.alert_message)
-            self.time = pomo.timer_duration
-            self.stop()
-            self.app.query_one(Stopwatch).remove_class("started")
         else:
             self.update(f"{mins:02.0f}:{secs:05.2f}")
+
+    def update_session(self):
+        pomo.toggle_state()
+        # update cycle count in UI
+        self.app.query_one(Cycles).update_cycle()
+        # update current session in UI
+        self.app.query_one(Current_Session).update_current_session()
+        self.app.notify(pomo.alert_message)
+        self.time = pomo.timer_duration
+        self.stop()
+        self.app.query_one(Stopwatch).remove_class("started")
 
     def start(self) -> None:
         """Function to start the timer"""
@@ -72,8 +72,10 @@ class TimeDisplay(Digits):
 
     def reset(self) -> None:
         """Method to reset the time display to zero."""
-        self.total = self.focus_duration
-        self.time = self.focus_duration
+
+    def skip(self) -> None:
+        """Method to move to the next session within cycle"""
+        self.update_session()
 
 
 class Stopwatch(HorizontalGroup):
@@ -85,6 +87,7 @@ class Stopwatch(HorizontalGroup):
         time_display = self.query_one(
             TimeDisplay
         )  # query_one is like getElementById/Classname
+
         if button_id == "start":
             time_display.start()
             self.add_class("started")
@@ -115,10 +118,10 @@ class Cycles(Static):
 
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
-        self.update(f"#{pomo.current_cycle_count}")
+        self.update(f"#{pomo.lifetime_cycle_count}")
 
     def update_cycle(self) -> None:
-        self.update(f"#{pomo.current_cycle_count}")
+        self.update(f"#{pomo.lifetime_cycle_count}")
 
 
 class Current_Session(Static):

@@ -5,8 +5,8 @@ class PomodoroManager:
     def __init__(
         self,
         current_cycle_count=1,
-        total_cycle_count=3,
-        lifetime_cycle_count=0,
+        total_cycle_count=4,  # cycle that long break happens on
+        lifetime_cycle_count=1,
         #
         time_to_focus=True,
         timer_duration=5,  # 5 seconds
@@ -60,6 +60,7 @@ class PomodoroManager:
             # Break just ended, decide if we reset or increment
             if self.current_cycle_count == self.total_cycle_count:
                 self.current_cycle_count = 0
+                self.lifetime_cycle_count += 1
             else:
                 self.current_cycle_count += 1
                 self.lifetime_cycle_count += 1
@@ -74,10 +75,11 @@ class PomodoroManager:
     def timer_duration(self):
         return self._timer_duration
 
-    # is this even necessary?
     @timer_duration.setter
-    def timer_duration(self):
-        return self._timer_duration
+    def timer_duration(self, value):
+        if value < 0:
+            raise ValueError("Timer duration cannot be negative.")
+        self._timer_duration = value
 
     # checks the current state of app and
     # updates timer duration accordingly
@@ -108,14 +110,14 @@ class PomodoroManager:
 
         return self.alert_message
 
-    @property
-    def current_session(self):
-        return self._current_session
-
-    # is this even necessary?
-    @current_session.setter
-    def current_session(self):
-        return self._current_session
+    # @property
+    # def current_session(self):
+    #     return self._current_session
+    #
+    # # is this even necessary?
+    # @current_session.setter
+    # def current_session(self):
+    #     return self._current_session
 
     def get_current_session(self):
         current_state = self._get_current_state()
