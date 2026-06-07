@@ -4,39 +4,44 @@ class PomodoroManager:
     # this will eventaully all be controlled from a config file but that's a later thing
     def __init__(
         self,
-        cycle_count=1,
+        current_cycle_count=1,
         total_cycle_count=3,
         lifetime_cycle_count=0,
-        # timer_duration=1500,  # 25 minutes - how long the timer is at any given moment
-        timer_duration=5,  # 5 seconds
+        #
         time_to_focus=True,
-        # focus_duration=1500,  # 25 minutes - how long a "focus cycle" is
-        focus_duration=5,  # 5 seconds
-        # short_break_duration=300,  # 5 minutes
-        # long_break_duration=900,  # 15 minutes
+        timer_duration=5,  # 5 seconds
+        focus_session_duration=5,  # 5 seconds
         short_break_duration=3,  # 3 seconds
         long_break_duration=8,  # 5 seconds
+        #
         short_break_message="Time for a short break!",
         long_break_message="Time for a long break!",
-        focus_message="Time to focus!",
+        focus_session_message="Time to focus!",
+        current_session="Focus",
     ):
-        self.cycle_count = cycle_count
+        self.current_cycle_count = current_cycle_count
         self.total_cycle_count = total_cycle_count
         self.lifetime_cycle_count = lifetime_cycle_count
-        self._timer_duration = timer_duration
+        #
         self.time_to_focus = time_to_focus
-        self.FOCUS_DURATION = focus_duration
+        self._timer_duration = timer_duration
+        self.FOCUS_SESSION_DURATION = focus_session_duration
         self.SHORT_BREAK_DURATION = short_break_duration
         self.LONG_BREAK_DURATION = long_break_duration
+        #
         self.SHORT_BREAK_MESSAGE = short_break_message
         self.LONG_BREAK_MESSAGE = long_break_message
-        self.FOCUS_MESSAGE = focus_message
-        self.alert_message = short_break_message
+        self.FOCUS_SESSION_MESSAGE = focus_session_message
+        self._alert_message = short_break_message
+        self._current_session = current_session
 
     # single source of truth of the state of the application at any point,
     # this is where all of the functions look if they need to know what timer cycle the user is on.
     def _get_current_state(self):
-        if self.cycle_count == self.total_cycle_count and not self.time_to_focus:
+        if (
+            self.current_cycle_count == self.total_cycle_count
+            and not self.time_to_focus
+        ):
             return "LONG_BREAK"
         elif not self.time_to_focus:
             return "SHORT_BREAK"
@@ -53,10 +58,10 @@ class PomodoroManager:
             self.time_to_focus = False
         else:
             # Break just ended, decide if we reset or increment
-            if self.cycle_count == self.total_cycle_count:
-                self.cycle_count = 0
+            if self.current_cycle_count == self.total_cycle_count:
+                self.current_cycle_count = 0
             else:
-                self.cycle_count += 1
+                self.current_cycle_count += 1
                 self.lifetime_cycle_count += 1
             self.time_to_focus = True
 
@@ -69,25 +74,24 @@ class PomodoroManager:
     def timer_duration(self):
         return self._timer_duration
 
+    # is this even necessary?
     @timer_duration.setter
-    def timer_duration(self, value):
-        if value < 0:
-            raise ValueError("Timer duration cannot be negative.")
-        self._timer_duration = value
+    def timer_duration(self):
+        return self._timer_duration
 
     # checks the current state of app and
     # updates timer duration accordingly
     def set_timer_duration(self):
         current_state = self._get_current_state()
         if current_state == "LONG_BREAK":
-            self.timer_duration = self.LONG_BREAK_DURATION
+            self._timer_duration = self.LONG_BREAK_DURATION
             return self.timer_duration
         elif current_state == "SHORT_BREAK":
-            self.timer_duration = self.SHORT_BREAK_DURATION
-            return self.timer_duration
+            self._timer_duration = self.SHORT_BREAK_DURATION
+            return self._timer_duration
         elif current_state == "FOCUS":
-            self.timer_duration = self.FOCUS_DURATION
-            return self.timer_duration
+            self._timer_duration = self.FOCUS_SESSION_DURATION
+            return self._timer_duration
         else:
             print("set_timer_duration foobarbaz")
 
@@ -100,6 +104,26 @@ class PomodoroManager:
         elif current_state == "SHORT_BREAK":
             self.alert_message = self.SHORT_BREAK_MESSAGE
         else:
-            self.alert_message = self.FOCUS_MESSAGE
+            self.alert_message = self.FOCUS_SESSION_MESSAGE
 
         return self.alert_message
+
+    @property
+    def current_session(self):
+        return self._current_session
+
+    # is this even necessary?
+    @current_session.setter
+    def current_session(self):
+        return self._current_session
+
+    def get_current_session(self):
+        current_state = self._get_current_state()
+        if current_state == "LONG_BREAK":
+            self._current_session = "Long Break"
+        elif current_state == "SHORT_BREAK":
+            self._current_session = "Short Break"
+        else:
+            self._current_session = "Focus"
+
+        return self._current_session

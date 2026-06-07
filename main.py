@@ -9,11 +9,12 @@ from textual.widgets import Button, Digits, Footer, Header, Static
 
 pomo = pomoclass.PomodoroManager()
 
-# BUG:  cycle_count should always increment after a break has ended, currently only incrementing after short breaks
+# BUG:  cycle_count should always increment after next focus session has started,
+# currently incrementing once short break has ended
+# TODO: create display fields that show if user is in focus, short break, or long break
 # TODO: implement logic or skipping breaks/ focus sessions
 # TODO: create key bindings for:
 # start, stop, reset, skip
-# TODO: create display fields that show if user is in focus, short break, or long break
 # TODO: refactor the rest of the classes in PomodoroManager to use decorators
 # TODO: rename classes in main.py to reflect naming associated with a timer and not a stopwatch
 # TODO: Style app to look a little nicer
@@ -28,7 +29,7 @@ class TimeDisplay(Digits):
     """Widget displaying timer face"""
 
     timer_duration = pomo.timer_duration
-    focus_duration = pomo.FOCUS_DURATION
+    focus_duration = pomo.FOCUS_SESSION_DURATION
 
     start_time = timer_duration
     time = reactive(timer_duration)
@@ -41,7 +42,6 @@ class TimeDisplay(Digits):
     def update_time(self) -> None:
         """Method updates time to current time"""
         self.time -= 1
-        # print(f"update_time() self.time: {self.time}")
 
     # methods prefixed watch_ followed by name of reactive attribute
     # run every time the reactive attribute changes
@@ -49,8 +49,10 @@ class TimeDisplay(Digits):
         """Called when the time attribute changes."""
         mins, secs = divmod(time, 60)
         if time == 0:
-            print("TOGGLE_STATE")
+            # update cycle count in UI
             self.app.query_one(Cycles).update_cycle()
+            # update current session in UI
+            self.app.query_one(Current_Session).update_current_session()
             self.update(f"{mins:02.0f}:{secs:05.2f}")
             pomo.toggle_state()
             self.app.notify(pomo.alert_message)
@@ -84,7 +86,6 @@ class Stopwatch(HorizontalGroup):
             TimeDisplay
         )  # query_one is like getElementById/Classname
         if button_id == "start":
-            print("TIME_DISPLAY.START() PRESSED")
             time_display.start()
             self.add_class("started")
         elif button_id == "stop":
@@ -111,16 +112,33 @@ class Cycles(Static):
         content-align: center middle;
     }
     """
-    current_cycle_count = pomo.cycle_count + 1
 
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
-        # self.update(f"#{self.current_cycle_count}")
-        self.update(f"#{pomo.cycle_count}")
+        self.update(f"#{pomo.current_cycle_count}")
 
     def update_cycle(self) -> None:
-        # self.update(f"#{self.current_cycle_count}")
-        self.update(f"#{pomo.cycle_count}")
+        self.update(f"#{pomo.current_cycle_count}")
+
+
+class Current_Session(Static):
+    DEFAULT_CSS = """
+    Current_Session {
+        width: 25;
+        height: 5;
+        padding: 1 2;
+        background: $panel;
+        border: $secondary tall;
+        content-align: center middle;
+    }
+    """
+
+    def on_mount(self) -> None:
+        """event handler called when a widget is added to the app"""
+        self.update(f"{pomo.get_current_session()}")
+
+    def update_current_session(self):
+        self.update(f"{pomo.get_current_session()}")
 
 
 # Turns main() into an async function which just allows for asyncronous code
@@ -137,7 +155,7 @@ class StopwatchApp(App):
         """Create child widgets for the app"""
         yield Header()
         yield Footer()
-        yield VerticalScroll(Stopwatch(), Cycles())
+        yield VerticalScroll(Stopwatch(), Cycles(), Current_Session())
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode"""
