@@ -7,10 +7,10 @@ class PomodoroManager:
         lifetime_cycle_count=1,
         #
         time_to_focus=True,
-        timer_duration=5,  # 5 seconds
-        focus_session_duration=5,  # 5 seconds
-        short_break_duration=3,  # 3 seconds
-        long_break_duration=8,  # 5 seconds
+        timer_duration=1500,  # 25 minutes
+        focus_session_duration=1500,  # 25 minutes
+        short_break_duration=300,  # 5 minutes
+        long_break_duration=900,  # 15 minutes
         #
         short_break_message="Time for a short break!",
         long_break_message="Time for a long break!",
