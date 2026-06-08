@@ -3,8 +3,6 @@ import subprocess
 import platform
 from pathlib import Path
 
-# from desktop_notifier import DesktopNotifier, Button
-
 from textual.app import App, ComposeResult
 from textual.containers import HorizontalGroup, VerticalScroll
 from textual.reactive import reactive
@@ -12,20 +10,10 @@ from textual.widgets import Button, Digits, Footer, Header, Static
 
 pomo = pomoclass.PomodoroManager()
 
-# TODO: implement logic or skipping breaks/ focus sessions
-# TODO: create key bindings for:
-# start, stop, reset, skip
 # TODO: refactor the rest of the classes in PomodoroManager to use decorators
-# TODO: rename classes in main.py to reflect naming associated with a timer and not a stopwatch
-# TODO: Style app to look a little nicer
 # TODO: get familiar with TOML and what is controlled with the pyproject.toml file
 # TODO: see if there is a replacement for if you can get DesktopNotifier to work for system-level notifications
-# TODO: See if you can make sound happen at the end of sessions
 # TODO: Update README.md
-# INFO: The app can be suspended with `ctrl + z` like normal but you can also bind a "suspend" event to a key and have Textual run system code like starting the default terminal app to give the user their terminal back once they've started the timer
-# TODO: REFACTOR - move pomo off the global scope and onto the app itself (self.app.pomo)
-# so that reset() can just do self.app.pomo = PomodoroManager() instead of manually
-# resetting every attribute. Required before config file / settings menu can be implemented.
 
 
 class TimeDisplay(Digits):
@@ -74,15 +62,12 @@ class TimeDisplay(Digits):
             )
 
     def sync_ui(self):
-        print("sync_ui() fired")
-
-        print(pomo.timer_duration)
         # update cycle count in UI
         self.app.query_one(Cycles).update_cycle()
         # update current session in UI
         self.app.query_one(Current_Session).update_current_session()
         self.time = pomo.timer_duration
-        self.app.query_one(Stopwatch).remove_class("started")
+        self.app.query_one(PomodoroTimer).remove_class("started")
         self.pause()
         self.app.notify(pomo.alert_message)
 
@@ -109,7 +94,7 @@ class TimeDisplay(Digits):
         self.update_timer.resume()
 
 
-class Stopwatch(HorizontalGroup):
+class PomodoroTimer(HorizontalGroup):
     """Main Timer Widget"""
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -139,17 +124,6 @@ class Stopwatch(HorizontalGroup):
 
 
 class Cycles(Static):
-    # DEFAULT_CSS = """
-    # Cycles {
-    #     width: 25;
-    #     height: 5;
-    #     padding: 1 2;
-    #     background: $panel;
-    #     border: $secondary tall;
-    #     content-align: center middle;
-    # }
-    # """
-
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
         self.update(f"#{pomo.lifetime_cycle_count}")
@@ -159,17 +133,6 @@ class Cycles(Static):
 
 
 class Current_Session(Static):
-    # DEFAULT_CSS = """
-    # Current_Session {
-    #     width: 25;
-    #     height: 5;
-    #     padding: 1 2;
-    #     background: $panel;
-    #     border: $secondary tall;
-    #     content-align: center middle;
-    # }
-    # """
-
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
         self.update(f"{pomo.get_current_session()}")
@@ -180,7 +143,7 @@ class Current_Session(Static):
 
 # Turns main() into an async function which just allows for asyncronous code
 # that couldn't be run otherwise to be run inside of it
-class StopwatchApp(App):
+class PomodoroApp(App):
     """A pomodoro timer cli for more productivity than you would have otherwise"""
 
     CSS_PATH = "./styles.tcss"
@@ -197,7 +160,7 @@ class StopwatchApp(App):
         yield Header()
         yield Footer()
         yield VerticalScroll(
-            Stopwatch(),
+            PomodoroTimer(),
             HorizontalGroup(Cycles(), Current_Session(), id="info-row"),
             id="main",
         )
@@ -210,23 +173,27 @@ class StopwatchApp(App):
 
     def action_start(self) -> None:
         """An action to start the timer"""
-        self.query_one(Stopwatch).query_one(TimeDisplay).start()
-        self.query_one(Stopwatch).add_class("started")
+        self.query_one(PomodoroTimer).query_one(TimeDisplay).start()
+        self.query_one(PomodoroTimer).add_class("started")
 
     def action_pause(self) -> None:
-        """An action to start the timer"""
-        self.query_one(Stopwatch).query_one(TimeDisplay).pause()
-        self.query_one(Stopwatch).remove_class("started")
+        """An action to pause the timer"""
+        self.query_one(PomodoroTimer).query_one(TimeDisplay).pause()
+        self.query_one(PomodoroTimer).remove_class("started")
 
     def action_skip(self) -> None:
-        """An action to start the timer"""
-        self.query_one(Stopwatch).query_one(TimeDisplay).skip()
+        """An action to skip the current session"""
+        self.query_one(PomodoroTimer).query_one(TimeDisplay).skip()
 
     def action_reset(self) -> None:
-        """An action to start the timer"""
-        self.query_one(Stopwatch).query_one(TimeDisplay).reset()
+        """An action to reset app state"""
+        self.query_one(PomodoroTimer).query_one(TimeDisplay).reset()
+
+
+def main():
+    app = PomodoroApp()
+    app.run()
 
 
 if __name__ == "__main__":
-    app = StopwatchApp()
-    app.run()
+    main()

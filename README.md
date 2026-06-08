@@ -1,46 +1,50 @@
 # Pomodoro CLI Timer
 
 ## Description
-A very slick, very cool, interactive command-line Pomodoro timer. Allows users to run a structured focus/break timer via the terminal.
+A very slick, very cool, fully interactive Pomodoro timer that runs entirely in your terminal. 
+Built with [Textual](https://textual.textualize.io/) in the backwards podunk state of Idaho.
 
-## Environment & Compatibility Notice
-**I use Linux btw:** At this stage in the project I have selfishly only developed on my Linux machine but plan to make this as cross-platform as I can as time permits.
+## Compatibility
+The Texual docs promised me cross platform and by golly that's what I hope you get. At the time of this writing it's only been tested on Ubuntu Linux. 
+Cross-platform testing is ongoing so ymmv.
 
-The system-level notifcations are handled by [desktop-notifier](https://desktop-notifier.readthedocs.io/en/latest/#) and I had to cry for at least an entire afternoon to get them to work on my machine properly so ymmv if you try and get it to run locally. 
+## Requirements
+- Python 3.11+
+- `textual`
 
-## Prerequisites & Installation
-Python 3.9+ and the `desktop-notifier` package.
+## Installation
 
-1. Download the zip file, extract in a folder named "stolen_nft_screenshots" 
-2. Open your terminal and navigate inside the extracted project folder.
-3. Create the virtual environment (not required, but a good idea):
-   - `python3 -m .venv venv`
-4. Activate the environment: 
-   - Linux/macOS: `source .venv/bin/activate`
-   - Windows: `.venv\Scripts\activate`
-5. Install dependencies:
-   `pip install -r requirements.txt`
+```bash
+pip install git+https://github.com/buckdooban/pomodoro.git
+```
 
-## Usage
-Boot it up with:
-`python main.py`
+Or clone and run manually:
 
-Once the timer is running, you can type the following commands into the terminal and press Enter:
-* `pause` - Suspends the active timer.
-* `start` - Resumes a paused timer.
-* `skip`  - Instantly ends the current phase and moves to the next (e.g., skips a break).
-* `reset` - Restarts the current phase from the beginning.
-* `stop`, `quit`, or `:q`- Terminates the application.
+```bash
+git clone https://github.com/buckdooban/pomodoro.git
+cd pomodoro
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
 
-## Helpful for peer reviews
+## How It Works
 
-Just so you don't have to go read the docs like a dork like I did here's the 411 on the stuff that isn't self explanatory: 
+The timer is broken into a **Focus Session** and a **Break**. Focus Session + Break = One **Cycle**
+Every fourth cycle gives you a **Long Break**. The session count keeps incrementing but only so you have an idea how long you've been working for.
 
-**1. Asynchronous Execution (`asyncio`)**
-Standard Python scripts execute one line at a time. If a program waits for a user to type a command (`input("et tu, Brutus? ")`), the whole program stops and waits. This project uses the `asyncio` event loop and thread executors (`asyncio.to_thread`) to make it seems like we're running the countdown timer and the user input listener concurrently. This allows the timer to update visually every second while constantly listening for your keyboard commands in the background.
+Focus sessions default to 25 minutes, breaks default to 5, and long breaks are 15.
 
-**2. State Management via Async Events**
-Instead of using standard boolean variables, I'm using fancy schmancy `asyncio.Event` flags to communicate what gets picked up by the input thread to the timer loop safely. When you type `pause`, the input thread sets the `pause_event` flag, and the timer loop reacts to it on its next tick.
+Currently the only way to change this is by updating the hardcoded values but a settings menu that you can toggle from the UI and adjust to your liking is on the roadmap fosho. 
 
-**3. Desktop Notifications**
-The `desktop-notifier` package handles all the scary communication with the OS's hardware. When a timer phase ends, the event loop pauses and sends a request to the OS to trigger a cute little popup. The loop remains paused until the user interacts with the notification, which triggers a callback to resume the application.
+### Keyboard shortcuts
+
+
+| Key | Action |
+|-----|--------|
+| `s` | Start timer |
+| `p` | Pause timer |
+| `n` | Skip to next session |
+| `r` | Reset to beginning |
+| `d` | Toggle dark mode |

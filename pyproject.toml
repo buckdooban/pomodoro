@@ -1,0 +1,10 @@
+[project]
+name = "pomodoro-cli"
+version = "0.1.0"
+description = "A terminal-based Pomodoro timer built with Textual"
+requires-python = ">=3.11"
+dependencies = [
+    "textual>=8.2,<8.3",
+]
+[project.scripts]
+pomo = "main:main"

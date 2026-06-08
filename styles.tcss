@@ -27,7 +27,7 @@ Current_Session {
     content-align: center middle;
 }
 
-Stopwatch {
+PomodoroTimer {
     layout: horizontal;
     background: $boost;
     height: 5;
