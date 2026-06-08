@@ -14,11 +14,10 @@ Cross-platform testing is ongoing so ymmv.
 
 ## Installation
 
-```bash
-pip install git+https://github.com/buckdooban/pomodoro.git
-```
+**Note:** Testing on Mac and Windows environments is in progress. 
+If you're running one of the Fairer OS's, ymmv for a little bit.
 
-Or clone and run manually:
+Clone the repo and run it manually if you want to play with it and check back later for an install script. 
 
 ```bash
 git clone https://github.com/buckdooban/pomodoro.git
