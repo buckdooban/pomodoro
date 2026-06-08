@@ -1,5 +1,7 @@
 # Pomodoro CLI Timer
 
+[If you're here from CS 162 here is the YouTube link](https://youtu.be/CtKZ6L9V6YI)
+
 ## Description
 A very slick, very cool, fully interactive Pomodoro timer that runs entirely in your terminal. 
 Built with [Textual](https://textual.textualize.io/) in the backwards podunk state of Idaho.
