@@ -45,7 +45,7 @@ class TimeDisplay(Digits):
             self.update_session()
             self.play_notification()
         else:
-            self.update(f"{mins:02.0f}:{secs:05.2f}")
+            self.update(f"{mins:02.0f}:{secs:02.0f}")
 
     def play_notification(self):
         if platform.system() == "Linux":
