@@ -21,7 +21,7 @@ Button {
     dock: left;
 }
 
-#stop {
+#pause {
     dock: left;
     display: none;
 }
@@ -43,7 +43,7 @@ Button {
     display: none
 }
 
-.started #stop {
+.started #pause {
     display: block
 }
 

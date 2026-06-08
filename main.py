@@ -1,4 +1,7 @@
 import pomoclass
+import subprocess
+import platform
+from pathlib import Path
 
 # from desktop_notifier import DesktopNotifier, Button
 
@@ -35,6 +38,8 @@ class TimeDisplay(Digits):
     time = reactive(timer_duration)
     total = reactive(timer_duration)
 
+    sound_path = Path(__file__).parent / "tone.wav"
+
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
         self.update_timer = self.set_interval(1, self.update_time, pause=True)
@@ -50,10 +55,27 @@ class TimeDisplay(Digits):
         mins, secs = divmod(time, 60)
         if time == 0:
             self.update_session()
+            self.play_notification()
         else:
             self.update(f"{mins:02.0f}:{secs:05.2f}")
 
+    def play_notification(self):
+        if platform.system() == "Linux":
+            subprocess.Popen(["aplay", self.sound_path])
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["afplay", self.sound_path])
+        elif platform.system() == "Windows":
+            subprocess.Popen(
+                [
+                    "powershell",
+                    "-c",
+                    f"(New-Object Media.SoundPlayer '{self.sound_path}').PlaySync()",
+                ]
+            )
+
     def sync_ui(self):
+        print("sync_ui() fired")
+
         print(pomo.timer_duration)
         # update cycle count in UI
         self.app.query_one(Cycles).update_cycle()
@@ -61,7 +83,7 @@ class TimeDisplay(Digits):
         self.app.query_one(Current_Session).update_current_session()
         self.time = pomo.timer_duration
         self.app.query_one(Stopwatch).remove_class("started")
-        self.stop()
+        self.pause()
         self.app.notify(pomo.alert_message)
 
     def update_session(self):
@@ -72,7 +94,7 @@ class TimeDisplay(Digits):
         """Function to start the timer"""
         self.update_timer.resume()
 
-    def stop(self) -> None:
+    def pause(self) -> None:
         """Function to stop the timer"""
         self.update_timer.pause()
 
@@ -84,6 +106,7 @@ class TimeDisplay(Digits):
     def skip(self) -> None:
         """Method to move to the next session within cycle"""
         self.update_session()
+        self.update_timer.resume()
 
 
 class Stopwatch(HorizontalGroup):
@@ -99,15 +122,17 @@ class Stopwatch(HorizontalGroup):
         if button_id == "start":
             time_display.start()
             self.add_class("started")
-        elif button_id == "stop":
-            time_display.stop()
+        elif button_id == "pause":
+            time_display.pause()
             self.remove_class("started")
         elif button_id == "reset":
             time_display.reset()
+        elif button_id == "skip":
+            time_display.skip()
 
     def compose(self) -> ComposeResult:
         yield Button("Start", id="start", variant="success")
-        yield Button("Stop", id="stop", variant="error")
+        yield Button("Pause", id="pause", variant="error")
         yield Button("Reset", id="reset")
         yield Button("Skip", id="skip")
         yield TimeDisplay("00:00")
@@ -161,6 +186,10 @@ class StopwatchApp(App):
     CSS_PATH = "./styles.tcss"
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
+        ("s", "start", "Start"),
+        ("p", "pause", "Pause"),
+        ("n", "skip", "Skip"),
+        ("r", "reset", "Reset"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -174,6 +203,24 @@ class StopwatchApp(App):
         self.theme = (
             "textual-dark" if self.theme == "textual-light" else "textual-light"
         )
+
+    def action_start(self) -> None:
+        """An action to start the timer"""
+        self.query_one(Stopwatch).query_one(TimeDisplay).start()
+        self.query_one(Stopwatch).add_class("started")
+
+    def action_pause(self) -> None:
+        """An action to start the timer"""
+        self.query_one(Stopwatch).query_one(TimeDisplay).pause()
+        self.query_one(Stopwatch).remove_class("started")
+
+    def action_skip(self) -> None:
+        """An action to start the timer"""
+        self.query_one(Stopwatch).query_one(TimeDisplay).skip()
+
+    def action_reset(self) -> None:
+        """An action to start the timer"""
+        self.query_one(Stopwatch).query_one(TimeDisplay).reset()
 
 
 if __name__ == "__main__":
