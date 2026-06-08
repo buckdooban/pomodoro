@@ -1,3 +1,32 @@
+Screen {
+    align: center top;
+}
+
+#main {
+    width: 80;
+}
+
+#info-row {
+    height: 7;
+    width: 100%;
+}
+
+Cycles {
+    width: 1fr;
+    padding: 1 2;
+    background: $panel;
+    border: $secondary tall;
+    content-align: center middle;
+}
+
+Current_Session {
+    width: 1fr;
+    padding: 1 2;
+    background: $panel;
+    border: $secondary tall;
+    content-align: center middle;
+}
+
 Stopwatch {
     layout: horizontal;
     background: $boost;

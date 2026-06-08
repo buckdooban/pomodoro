@@ -139,16 +139,16 @@ class Stopwatch(HorizontalGroup):
 
 
 class Cycles(Static):
-    DEFAULT_CSS = """
-    Cycles {
-        width: 25;
-        height: 5;
-        padding: 1 2;
-        background: $panel;
-        border: $secondary tall;
-        content-align: center middle;
-    }
-    """
+    # DEFAULT_CSS = """
+    # Cycles {
+    #     width: 25;
+    #     height: 5;
+    #     padding: 1 2;
+    #     background: $panel;
+    #     border: $secondary tall;
+    #     content-align: center middle;
+    # }
+    # """
 
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
@@ -159,16 +159,16 @@ class Cycles(Static):
 
 
 class Current_Session(Static):
-    DEFAULT_CSS = """
-    Current_Session {
-        width: 25;
-        height: 5;
-        padding: 1 2;
-        background: $panel;
-        border: $secondary tall;
-        content-align: center middle;
-    }
-    """
+    # DEFAULT_CSS = """
+    # Current_Session {
+    #     width: 25;
+    #     height: 5;
+    #     padding: 1 2;
+    #     background: $panel;
+    #     border: $secondary tall;
+    #     content-align: center middle;
+    # }
+    # """
 
     def on_mount(self) -> None:
         """event handler called when a widget is added to the app"""
@@ -196,7 +196,11 @@ class StopwatchApp(App):
         """Create child widgets for the app"""
         yield Header()
         yield Footer()
-        yield VerticalScroll(Stopwatch(), Cycles(), Current_Session())
+        yield VerticalScroll(
+            Stopwatch(),
+            HorizontalGroup(Cycles(), Current_Session(), id="info-row"),
+            id="main",
+        )
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode"""
