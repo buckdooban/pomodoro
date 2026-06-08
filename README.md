@@ -5,7 +5,7 @@ A very slick, very cool, fully interactive Pomodoro timer that runs entirely in 
 Built with [Textual](https://textual.textualize.io/) in the backwards podunk state of Idaho.
 
 ## Compatibility
-The Texual docs promised me cross platform and by golly that's what I hope you get. At the time of this writing it's only been tested on Ubuntu Linux. 
+The Texual docs promised me cross platform and by golly that's what I hope you get. 
 Cross-platform testing is ongoing so ymmv.
 
 ## Requirements
@@ -14,10 +14,10 @@ Cross-platform testing is ongoing so ymmv.
 
 ## Installation
 
-**Note:** Testing on Mac and Windows environments is in progress. 
-If you're running one of the Fairer OS's, ymmv for a little bit.
+**Note:** At the time of this writing it's only been tested on Mac and Ubuntu Linux (I use Linux btw) Windows environments is in progress.
+If you're running Windows, it should work. But I'm not 100% sure. The only Windows machine I have is an old Dell Chromebook that I haven't opened since 2021. So, ymmv for a little bit Windows gang. 
 
-Clone the repo and run it manually if you want to play with it and check back later for an install script. 
+If you're feeling frisky and wanna play with it, clone the repo and run it. I intend to get an install script here soon to make it easier for all OS's.
 
 ```bash
 git clone https://github.com/buckdooban/pomodoro.git
@@ -35,7 +35,7 @@ Every fourth cycle gives you a **Long Break**. The session count keeps increment
 
 Focus sessions default to 25 minutes, breaks default to 5, and long breaks are 15.
 
-Currently the only way to change this is by updating the hardcoded values but a settings menu that you can toggle from the UI and adjust to your liking is on the roadmap fosho. 
+Currently the only way to change this is by updating the hardcoded values in pomoclass.py but a settings menu that you can toggle from the UI and adjust to your liking is on the roadmap fosho. 
 
 ### Keyboard shortcuts
 
