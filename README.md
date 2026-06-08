@@ -1,6 +1,7 @@
 # Pomodoro CLI Timer
 
-[If you're here from CS 162 here is the YouTube link](https://youtu.be/CtKZ6L9V6YI)
+[If you're here from CS 162 here is the YouTube for the demo](https://youtu.be/CtKZ6L9V6YI)
+[If you're here from CS 162 here is the YouTube for the walkthrough](https://youtu.be/_TJGTeyT6eo)
 
 ## Description
 A very slick, very cool, fully interactive Pomodoro timer that runs entirely in your terminal. 

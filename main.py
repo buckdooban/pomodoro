@@ -10,10 +10,26 @@ from textual.widgets import Button, Digits, Footer, Header, Static
 
 pomo = pomoclass.PomodoroManager()
 
-# TODO: refactor the rest of the classes in PomodoroManager to use decorators
-# TODO: get familiar with TOML and what is controlled with the pyproject.toml file
-# TODO: see if there is a replacement for if you can get DesktopNotifier to work for system-level notifications
+# TODO: Installable via `pipx`
+# ___ With real working cross-OS install script
+# TODO: refactor the rest of the classes in PomodoroManager to use decorators as it becomes necessary
+# e.g. when user input starts happening
+# TODO: see if there is a replacement for or if you can get DesktopNotifier to work for system-level notifications
+# TODO: initialize all of the default state/ provide customization options with a config file instead of hard coding
+# TODO: settings menu: provide capabilities to adjust default settings/ customize from UI
+# - [ ] Adjust length of Break Blocks and Pomodoro Blocks
+# - [ ] Change notification sound
+# - [ ] Optionally Autostart Next Cycle when Previous Cycle ends
+# TODO: Background color changes depending on what part of cycle you're in
+# - [ ] Focus (Red background, white text)
+# - [ ] Short break (Blue background, black text)
+# - [ ] Long break (Purple background, black text)
+# TODO: Real time countdown in the toolbar on user's computer near where clock and date are
+# maybe adjust the background color too?
+# TODO: SMS notifications
+# Integrate with Twilio so user can get a text when it's time to focus
 # TODO: Update README.md
+# screenshots
 
 
 class TimeDisplay(Digits):
@@ -24,7 +40,6 @@ class TimeDisplay(Digits):
 
     start_time = timer_duration
     time = reactive(timer_duration)
-    total = reactive(timer_duration)
 
     sound_path = Path(__file__).parent / "tone.wav"
 
@@ -141,7 +156,7 @@ class Current_Session(Static):
         self.update(f"{pomo.get_current_session()}")
 
 
-# Turns main() into an async function which just allows for asyncronous code
+# Turns PomodoroApp() into an async function which just allows for asyncronous code
 # that couldn't be run otherwise to be run inside of it
 class PomodoroApp(App):
     """A pomodoro timer cli for more productivity than you would have otherwise"""

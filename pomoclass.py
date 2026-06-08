@@ -1,7 +1,5 @@
 class PomodoroManager:
 
-    # initialize all of the default state, the times integers represent minutes
-    # this will eventaully all be controlled from a config file but that's a later thing
     def __init__(
         self,
         current_cycle_count=1,
@@ -35,9 +33,9 @@ class PomodoroManager:
         self.alert_message = short_break_message
         self._current_session = current_session
 
-    # single source of truth of the state of the application at any point,
-    # this is where all of the functions look if they need to know what timer cycle the user is on.
     def _get_current_state(self):
+        """Source of truth for where the state of the app is
+        at any given point. Focus, short break, long break"""
         if (
             self.current_cycle_count == self.total_cycle_count
             and not self.time_to_focus
@@ -48,12 +46,7 @@ class PomodoroManager:
         else:
             return "FOCUS"
 
-    # updates state after every timer sequence
-    # i.e. when a focus session ends, when a short or a long break ends
     def toggle_state(self):
-        # if the timer goes off and it's time to focus, a break just ended
-        # switch time_to_focus to false so the next time a timer ends the
-        # app knows it's time for a break
         if self.time_to_focus:
             self.time_to_focus = False
         else:
@@ -96,9 +89,10 @@ class PomodoroManager:
             raise ValueError("Timer duration cannot be negative.")
         self._timer_duration = value
 
-    # checks the current state of app and
-    # updates timer duration accordingly
     def set_timer_duration(self):
+        """checks the current state of app and
+        updates timer duration accordingly"""
+
         current_state = self._get_current_state()
         if current_state == "LONG_BREAK":
             self._timer_duration = self.LONG_BREAK_DURATION
@@ -112,9 +106,10 @@ class PomodoroManager:
         else:
             print("set_timer_duration foobarbaz")
 
-    # checks the current state of app and
-    # updates notification message accordingly
     def set_message(self):
+        """checks the current state of app and
+        updates notification message accordingly"""
+
         current_state = self._get_current_state()
         if current_state == "LONG_BREAK":
             self.alert_message = self.LONG_BREAK_MESSAGE
